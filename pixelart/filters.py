@@ -41,7 +41,7 @@ class Pixelate(Filter):
         # Achicamos promediando (BOX) y agrandamos sin suavizar (NEAREST)
         small = Image.fromarray(image).resize((small_width, small_height), Image.BOX)
         big = small.resize((width, height), Image.NEAREST)
-     return np.asarray(big)
+        return np.asarray(big)
 
 
 class PaletteReducer(Filter):
