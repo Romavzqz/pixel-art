@@ -41,4 +41,20 @@ class Pixelate(Filter):
         # Achicamos promediando (BOX) y agrandamos sin suavizar (NEAREST)
         small = Image.fromarray(image).resize((small_width, small_height), Image.BOX)
         big = small.resize((width, height), Image.NEAREST)
-        return
+                return np.asarray(big)
+
+
+class PaletteReducer(Filter):
+    """Cambia cada color por el más parecido de una paleta retro."""
+
+    def __init__(self, palette: str = "retro") -> None:
+        if palette not in PALETTES:
+            raise ValueError(f"Paleta inválida: '{palette}'. Opciones: {list(PALETTES)}")
+        self.colors = np.array(PALETTES[palette], dtype=np.int32)
+
+    def apply(self, image: np.ndarray) -> np.ndarray:
+        pixels = image.reshape(-1, 3).astype(np.int32)
+        # Distancia de cada píxel a cada color de la paleta
+        distances = ((pixels[:, None, :] - self.colors[None, :, :]) ** 2).sum(axis=2)
+        nearest = distances.argmin(axis=1)
+        return self.colors[nearest].reshape(image.shape).astype(np.uint8)
