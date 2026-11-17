@@ -32,6 +32,20 @@ class Filter(ABC):
         """Devuelve una imagen nueva con el filtro aplicado."""
 
 
+class Vivid(Filter):
+    """Pone los colores más vivos y con más contraste, para que la paleta los reconozca mejor."""
+
+    def __init__(self, saturation: float = 1.4, contrast: float = 1.3) -> None:
+        self.saturation = saturation
+        self.contrast = contrast
+
+    def apply(self, image: np.ndarray) -> np.ndarray:
+        picture = Image.fromarray(image)
+        picture = ImageEnhance.Color(picture).enhance(self.saturation)
+        picture = ImageEnhance.Contrast(picture).enhance(self.contrast)
+        return np.asarray(picture)
+
+
 class Pixelate(Filter):
     """Convierte la foto en cuadraditos grandes."""
 
@@ -53,7 +67,7 @@ class Pixelate(Filter):
 class PaletteReducer(Filter):
     """Cambia cada color por el más parecido de una paleta retro."""
 
-    def __init__(self, palette: str = "retro") -> None:
+    def __init__(self, palette: str = "consola") -> None:
         if palette not in PALETTES:
             raise ValueError(f"Paleta inválida: '{palette}'. Opciones: {list(PALETTES)}")
         self.colors = np.array(PALETTES[palette], dtype=np.int32)
@@ -64,17 +78,3 @@ class PaletteReducer(Filter):
         distances = ((pixels[:, None, :] - self.colors[None, :, :]) ** 2).sum(axis=2)
         nearest = distances.argmin(axis=1)
         return self.colors[nearest].reshape(image.shape).astype(np.uint8)
-
-
-    class Vivid(Filter):
-    """Pone los colores más vivos y con más contraste, para que la paleta los reconozca mejor."""
-
-    def __init__(self, saturation: float = 1.8, contrast: float = 1.3) -> None:
-        self.saturation = saturation
-        self.contrast = contrast
-
-    def apply(self, image: np.ndarray) -> np.ndarray:
-        picture = Image.fromarray(image)
-        picture = ImageEnhance.Color(picture).enhance(self.saturation)
-        picture = ImageEnhance.Contrast(picture).enhance(self.contrast)
-        return np.asarray(picture)
