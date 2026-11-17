@@ -12,7 +12,7 @@ from PIL import Image, ImageOps
 # Para poder importar la carpeta pixelart, que está un nivel más arriba
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pixelart.filters import PaletteReducer, Pixelate  # noqa: E402
+from pixelart.filters import PaletteReducer, Pixelate, Vivid  # noqa: E402
 
 MAX_SIDE = 1200  # las fotos más grandes se achican, así es más rápido
 
@@ -35,7 +35,7 @@ class handler(BaseHTTPRequestHandler):
             image = np.asarray(photo)
 
             # 3. Aplicamos los filtros uno detrás del otro (polimorfismo)
-            for pixel_filter in [Pixelate(pixel_size), PaletteReducer(palette)]:
+            for pixel_filter in [Vivid(), Pixelate(pixel_size), PaletteReducer(palette)]:
                 image = pixel_filter.apply(image)
 
             # 4. Devolvemos el resultado como PNG

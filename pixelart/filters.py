@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 # Paletas de colores retro: cada color es (rojo, verde, azul).
 PALETTES = {
@@ -58,3 +58,17 @@ class PaletteReducer(Filter):
         distances = ((pixels[:, None, :] - self.colors[None, :, :]) ** 2).sum(axis=2)
         nearest = distances.argmin(axis=1)
         return self.colors[nearest].reshape(image.shape).astype(np.uint8)
+
+
+        class Vivid(Filter):
+    """Pone los colores más vivos y con más contraste, para que la paleta los reconozca mejor."""
+
+    def __init__(self, saturation: float = 1.8, contrast: float = 1.3) -> None:
+        self.saturation = saturation
+        self.contrast = contrast
+
+    def apply(self, image: np.ndarray) -> np.ndarray:
+        picture = Image.fromarray(image)
+        picture = ImageEnhance.Color(picture).enhance(self.saturation)
+        picture = ImageEnhance.Contrast(picture).enhance(self.contrast)
+        return np.asarray(picture)
