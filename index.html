@@ -8,4 +8,128 @@
   <h1>Pixel Art 8-bit</h1>
   <p>Muy pronto vas a poder convertir tu foto en un personaje de videojuego.</p>
 </body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pixel Art 8-bit</title>
+  <style>
+    body {
+      font-family: "Courier New", monospace;
+      background: #1d2b53;
+      color: #fff1e8;
+      text-align: center;
+      margin: 0;
+      padding: 16px;
+    }
+    h1 { color: #ffec27; }
+    .panel {
+      background: #000;
+      border: 4px solid #29adff;
+      max-width: 480px;
+      margin: 0 auto 16px;
+      padding: 16px;
+    }
+    label { display: block; margin: 12px 0 4px; }
+    select, input, button { font-family: inherit; font-size: 16px; }
+    button {
+      background: #ff004d;
+      color: #fff1e8;
+      border: none;
+      padding: 12px 24px;
+      margin-top: 16px;
+      cursor: pointer;
+    }
+    button:disabled { background: #5f574f; }
+    img { max-width: 100%; image-rendering: pixelated; margin-top: 12px; }
+    #error { color: #ff77a8; }
+    a { color: #ffec27; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Pixel Art 8-bit</h1>
+  <p>Convertí tu foto en un personaje de videojuego retro.</p>
+
+  <div class="panel">
+    <label for="photo">1. Elegí una foto</label>
+    <input type="file" id="photo" accept="image/*">
+
+    <label for="size">2. Tamaño de los cuadraditos: <span id="sizeValue">12</span></label>
+    <input type="range" id="size" min="4" max="40" value="12">
+
+    <label for="palette">3. Paleta de colores</label>
+    <select id="palette">
+      <option value="consola">Consola (16 colores)</option>
+      <option value="retro">Retro</option>
+      <option value="gameboy">Gameboy (verdes)</option>
+      <option value="blanco_y_negro">Blanco y negro</option>
+    </select>
+
+    <br>
+    <button id="convert" disabled>¡Convertir!</button>
+    <p id="error"></p>
+  </div>
+
+  <div class="panel">
+    <img id="result" alt="Acá va a aparecer tu pixel art" hidden>
+    <br>
+    <a id="download" download="pixel-art.png" hidden>Descargar imagen</a>
+  </div>
+
+  <script>
+    const photoInput = document.getElementById("photo");
+    const sizeInput = document.getElementById("size");
+    const paletteInput = document.getElementById("palette");
+    const convertButton = document.getElementById("convert");
+    const errorText = document.getElementById("error");
+    const result = document.getElementById("result");
+    const download = document.getElementById("download");
+
+    // Mostrar el número del tamaño cuando se mueve la barrita
+    sizeInput.addEventListener("input", () => {
+      document.getElementById("sizeValue").textContent = sizeInput.value;
+    });
+
+    // El botón se activa recién cuando hay una foto elegida
+    photoInput.addEventListener("change", () => {
+      convertButton.disabled = photoInput.files.length === 0;
+    });
+
+    // Achica la foto en el navegador antes de mandarla (las de celular pesan mucho)
+    async function shrinkPhoto(file) {
+      const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      const scale = Math.min(1, 1200 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    }
+
+    convertButton.addEventListener("click", async () => {
+      errorText.textContent = "";
+      convertButton.disabled = true;
+      convertButton.textContent = "Convirtiendo...";
+      try {
+        const photo = await shrinkPhoto(photoInput.files[0]);
+        const url = `/api/pixelate?pixel_size=${sizeInput.value}&palette=${paletteInput.value}`;
+        const response = await fetch(url, { method: "POST", body: photo });
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        const imageUrl = URL.createObjectURL(await response.blob());
+        result.src = imageUrl;
+        result.hidden = false;
+        download.href = imageUrl;
+        download.hidden = false;
+      } catch (error) {
+        errorText.textContent = "No se pudo convertir la foto. " + error.message;
+      } finally {
+        convertButton.disabled = false;
+        convertButton.textContent = "¡Convertir!";
+      }
+    });
+  </script>
+</body>
 </html>
