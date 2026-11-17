@@ -4,68 +4,150 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pixel Art 8-bit</title>
+  <!-- Letras pixeladas de Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --fondo: #1d2b53;
+      --negro: #000000;
+      --blanco: #fff1e8;
+      --amarillo: #ffec27;
+      --rosa: #ff004d;
+      --celeste: #29adff;
+      --verde: #00e436;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: "Courier New", monospace;
-      background: #1d2b53;
-      color: #fff1e8;
-      text-align: center;
       margin: 0;
-      padding: 16px;
+      padding: 24px 16px 48px;
+      background-color: var(--fondo);
+      /* Rayitas finas, como las pantallas de tubo viejas */
+      background-image: repeating-linear-gradient(
+        0deg, rgba(0, 0, 0, 0.18) 0, rgba(0, 0, 0, 0.18) 2px, transparent 2px, transparent 4px
+      );
+      color: var(--blanco);
+      font-family: "VT323", "Courier New", monospace;
+      font-size: 22px;
+      text-align: center;
     }
-    h1 { color: #ffec27; }
+    h1 {
+      font-family: "Press Start 2P", monospace;
+      font-size: clamp(20px, 6vw, 36px);
+      line-height: 1.4;
+      color: var(--amarillo);
+      text-shadow: 4px 4px 0 var(--rosa), 8px 8px 0 var(--negro);
+      margin: 8px 0 16px;
+    }
+    .start {
+      font-family: "Press Start 2P", monospace;
+      font-size: 12px;
+      color: var(--verde);
+      animation: parpadeo 1s steps(1) infinite;
+    }
+    @keyframes parpadeo { 50% { opacity: 0; } }
     .panel {
-      background: #000;
-      border: 4px solid #29adff;
-      max-width: 480px;
-      margin: 0 auto 16px;
-      padding: 16px;
+      background: var(--negro);
+      max-width: 520px;
+      margin: 24px auto;
+      padding: 20px 16px;
+      /* Borde "pixelado" en escalones */
+      border: 4px solid var(--celeste);
+      box-shadow: 0 0 0 4px var(--negro), 8px 8px 0 4px var(--rosa);
     }
-    label { display: block; margin: 12px 0 4px; }
-    select, input, button { font-family: inherit; font-size: 16px; }
+    label {
+      display: block;
+      margin: 18px 0 8px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--amarillo);
+    }
+    select, input[type="file"] {
+      font-family: inherit;
+      font-size: 20px;
+      max-width: 100%;
+      color: var(--blanco);
+      background: var(--fondo);
+      border: 3px solid var(--blanco);
+      padding: 4px 8px;
+    }
+    input[type="range"] { width: 80%; accent-color: var(--rosa); }
+    .colores { display: flex; justify-content: center; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+    .colores span { width: 18px; height: 18px; border: 2px solid var(--blanco); }
     button {
-      background: #ff004d;
-      color: #fff1e8;
-      border: none;
-      padding: 12px 24px;
-      margin-top: 16px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 14px;
+      color: var(--blanco);
+      background: var(--rosa);
+      border: 4px solid var(--blanco);
+      box-shadow: 6px 6px 0 var(--negro);
+      padding: 14px 22px;
+      margin-top: 24px;
       cursor: pointer;
     }
-    button:disabled { background: #5f574f; }
-    img { max-width: 100%; image-rendering: pixelated; margin-top: 12px; }
+    button:active { transform: translate(6px, 6px); box-shadow: none; }
+    button:disabled { background: #5f574f; cursor: not-allowed; }
+    .cargando { animation: parpadeo 0.6s steps(1) infinite; }
     #error { color: #ff77a8; }
-    a { color: #ffec27; font-size: 18px; }
+    .fotos { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .fotos figure { margin: 0; flex: 1 1 200px; }
+    .fotos figcaption { font-family: "Press Start 2P", monospace; font-size: 10px; color: var(--celeste); margin-bottom: 8px; }
+    img { max-width: 100%; image-rendering: pixelated; border: 3px solid var(--blanco); }
+    a {
+      display: inline-block;
+      margin-top: 16px;
+      font-family: "Press Start 2P", monospace;
+      font-size: 12px;
+      color: var(--negro);
+      background: var(--verde);
+      padding: 10px 14px;
+      text-decoration: none;
+      border: 3px solid var(--blanco);
+    }
+    footer { font-size: 18px; opacity: 0.7; }
   </style>
 </head>
 <body>
-  <h1>Pixel Art 8-bit</h1>
-  <p>Convertí tu foto en un personaje de videojuego retro.</p>
+  <h1>PIXEL ART<br>8-BIT</h1>
+  <p class="start">ELEGÍ TU FOTO PARA EMPEZAR</p>
 
   <div class="panel">
-    <label for="photo">1. Elegí una foto</label>
+    <label for="photo">1. TU FOTO</label>
     <input type="file" id="photo" accept="image/*">
 
-    <label for="size">2. Tamaño de los cuadraditos: <span id="sizeValue">12</span></label>
+    <label for="size">2. CUADRADITOS: <span id="sizeValue">12</span></label>
     <input type="range" id="size" min="4" max="40" value="12">
 
-    <label for="palette">3. Paleta de colores</label>
+    <label for="palette">3. PALETA</label>
     <select id="palette">
       <option value="consola">Consola (16 colores)</option>
       <option value="retro">Retro</option>
       <option value="gameboy">Gameboy (verdes)</option>
       <option value="blanco_y_negro">Blanco y negro</option>
     </select>
+    <div class="colores" id="colores"></div>
 
-    <br>
-    <button id="convert" disabled>¡Convertir!</button>
+    <button id="convert" disabled>¡CONVERTIR!</button>
     <p id="error"></p>
   </div>
 
-  <div class="panel">
-    <img id="result" alt="Acá va a aparecer tu pixel art" hidden>
-    <br>
-    <a id="download" download="pixel-art.png" hidden>Descargar imagen</a>
+  <div class="panel" id="resultados" hidden>
+    <div class="fotos">
+      <figure>
+        <figcaption>ANTES</figcaption>
+        <img id="original" alt="Tu foto original">
+      </figure>
+      <figure>
+        <figcaption>DESPUÉS</figcaption>
+        <img id="result" alt="Tu foto en pixel art">
+      </figure>
+    </div>
+    <a id="download" download="pixel-art.png">⬇ DESCARGAR</a>
   </div>
+
+  <footer>Hecho con Python, Pillow y NumPy · Rocío Vázquez</footer>
 
   <script>
     const photoInput = document.getElementById("photo");
@@ -73,8 +155,30 @@
     const paletteInput = document.getElementById("palette");
     const convertButton = document.getElementById("convert");
     const errorText = document.getElementById("error");
+    const results = document.getElementById("resultados");
+    const original = document.getElementById("original");
     const result = document.getElementById("result");
     const download = document.getElementById("download");
+
+    // Algunos colores de cada paleta, para mostrarlos de muestra
+    const SAMPLES = {
+      consola: ["#000000", "#1d2b53", "#7e2553", "#008751", "#ab5236", "#ff004d", "#ffa300", "#ffec27", "#00e436", "#29adff", "#ff77a8", "#ffccaa"],
+      retro: ["#000000", "#ffffff", "#880000", "#aaffee", "#cc44cc", "#00cc55", "#0000aa", "#eeee77", "#dd8855", "#664400", "#0088ff", "#bbbbbb"],
+      gameboy: ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"],
+      blanco_y_negro: ["#000000", "#ffffff"],
+    };
+
+    function showColors() {
+      const box = document.getElementById("colores");
+      box.innerHTML = "";
+      for (const color of SAMPLES[paletteInput.value]) {
+        const square = document.createElement("span");
+        square.style.background = color;
+        box.appendChild(square);
+      }
+    }
+    paletteInput.addEventListener("change", showColors);
+    showColors();
 
     // Mostrar el número del tamaño cuando se mueve la barrita
     sizeInput.addEventListener("input", () => {
@@ -100,7 +204,8 @@
     convertButton.addEventListener("click", async () => {
       errorText.textContent = "";
       convertButton.disabled = true;
-      convertButton.textContent = "Convirtiendo...";
+      convertButton.textContent = "CARGANDO...";
+      convertButton.classList.add("cargando");
       try {
         const photo = await shrinkPhoto(photoInput.files[0]);
         const url = `/api/pixelate?pixel_size=${sizeInput.value}&palette=${paletteInput.value}`;
@@ -109,15 +214,17 @@
           throw new Error(await response.text());
         }
         const imageUrl = URL.createObjectURL(await response.blob());
+        original.src = URL.createObjectURL(photo);
         result.src = imageUrl;
-        result.hidden = false;
         download.href = imageUrl;
-        download.hidden = false;
+        results.hidden = false;
+        results.scrollIntoView({ behavior: "smooth" });
       } catch (error) {
-        errorText.textContent = "No se pudo convertir la foto. " + error.message;
+        errorText.textContent = "GAME OVER: no se pudo convertir la foto. " + error.message;
       } finally {
         convertButton.disabled = false;
-        convertButton.textContent = "¡Convertir!";
+        convertButton.textContent = "¡CONVERTIR!";
+        convertButton.classList.remove("cargando");
       }
     });
   </script>
