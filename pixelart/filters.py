@@ -66,7 +66,7 @@ class PaletteReducer(Filter):
         return self.colors[nearest].reshape(image.shape).astype(np.uint8)
 
 
-        class Vivid(Filter):
+    class Vivid(Filter):
     """Pone los colores más vivos y con más contraste, para que la paleta los reconozca mejor."""
 
     def __init__(self, saturation: float = 1.8, contrast: float = 1.3) -> None:
