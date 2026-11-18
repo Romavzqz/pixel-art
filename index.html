@@ -106,10 +106,14 @@
       text-decoration: none;
       border: 3px solid var(--blanco);
     }
-    footer { font-size: 18px; opacity: 0.7; }    body, button, select, input, a { cursor: url("cursor.svg") 16 16, auto; }
+    footer { font-size: 18px; opacity: 0.7; }
+    #music { position: fixed; top: 12px; right: 12px; margin: 0; padding: 8px 10px; font-size: 10px; background: var(--fondo); }
+    /* Cursor con fantasmita pixelado (el dibujo está en cursor.svg) */
+    body, button, select, input, a { cursor: url("cursor.svg") 16 16, auto; }
   </style>
 </head>
 <body>
+  <button id="music">🔇 MÚSICA</button>
   <h1>PIXEL ART<br>8-BIT</h1>
   <p class="start">ELEGÍ TU FOTO PARA EMPEZAR</p>
 
@@ -218,6 +222,7 @@
         result.src = imageUrl;
         download.href = imageUrl;
         results.hidden = false;
+        playTada();
         results.scrollIntoView({ behavior: "smooth" });
       } catch (error) {
         errorText.textContent = "GAME OVER: no se pudo convertir la foto. " + error.message;
@@ -227,6 +232,65 @@
         convertButton.classList.remove("cargando");
       }
     });
+
+    // ===== Música chiptune original, generada por el navegador (no usa archivos) =====
+    const NOTES = { C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880, B5: 987.77, C6: 1046.5, D6: 1174.66, G6: 1567.98 };
+    const MELODY = [
+      ["E5", 1], ["G5", 1], ["C6", 2], ["G5", 1], ["E5", 1], ["D5", 2],
+      ["F5", 1], ["A5", 1], ["D6", 2], ["A5", 1], ["F5", 1], ["E5", 2],
+      ["C5", 1], ["E5", 1], ["G5", 1], ["C6", 1], ["B5", 1], ["G5", 1], ["A5", 2],
+      ["G5", 1], ["F5", 1], ["E5", 1], ["D5", 1], ["C5", 4],
+    ];
+    const BEAT = 0.18; // segundos que dura cada pulso
+    let audio = null;
+    let musicTimer = null;
+
+    // Toca una nota con onda cuadrada, el sonido típico de las consolas viejas
+    function playNote(frequency, start, duration, volume = 0.04) {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.value = frequency;
+      gain.gain.setValueAtTime(volume, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(gain).connect(audio.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration);
+    }
+
+    // Toca la melodía entera y vuelve a empezar cuando termina
+    function loopMusic() {
+      let time = audio.currentTime + 0.05;
+      for (const [note, beats] of MELODY) {
+        playNote(NOTES[note], time, beats * BEAT * 0.9);
+        time += beats * BEAT;
+      }
+      musicTimer = setTimeout(loopMusic, (time - audio.currentTime) * 1000);
+    }
+
+    // Botón para prender y apagar la música
+    const musicButton = document.getElementById("music");
+    musicButton.addEventListener("click", () => {
+      if (musicTimer) {
+        clearTimeout(musicTimer);
+        musicTimer = null;
+        audio.close();
+        audio = null;
+        musicButton.textContent = "🔇 MÚSICA";
+      } else {
+        audio = new AudioContext();
+        loopMusic();
+        musicButton.textContent = "🔊 MÚSICA";
+      }
+    });
+
+    // Sonidito de "¡tadá!" cuando termina de convertir (solo si la música está prendida)
+    function playTada() {
+      if (!audio) return;
+      const now = audio.currentTime;
+      playNote(NOTES.C6, now, 0.1, 0.06);
+      playNote(NOTES.G6, now + 0.1, 0.25, 0.06);
+    }
   </script>
 </body>
 </html>
