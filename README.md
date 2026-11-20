@@ -1,69 +1,97 @@
-"""Tests de los filtros de pixel art."""
+# Pixel Art 8-bit
 
-import numpy as np
-import pytest
+Convierte cualquier foto en **pixel art** estilo videojuego retro: cuadraditos grandes y pocos colores.
 
-from pixelart.filters import PALETTES, PaletteReducer, Pixelate, Vivid
+🎮 **Probalo acá:** https://pixel-art-ten-rho.vercel.app/
 
+Proyecto final de Procesamiento de Imágenes · **Rocío Vázquez**
 
-def make_image() -> np.ndarray:
-    """Crea una imagen de prueba de 40x40 con cuatro colores en cuadrantes."""
-    image = np.zeros((40, 40, 3), np.uint8)
-    image[:20, :20] = (200, 30, 30)
-    image[:20, 20:] = (30, 200, 30)
-    image[20:, :20] = (30, 30, 200)
-    image[20:, 20:] = (240, 240, 240)
-    return image
+## Qué hace
 
+1. Subís una foto (desde la compu, o desde el celular con la cámara).
+2. Elegís el **tamaño de los cuadraditos** y una **paleta de colores**: consola (16 colores), retro, gameboy (4 verdes) o blanco y negro.
+3. La página muestra el **antes y el después**, y podés **descargar** el resultado.
 
-def test_pixelate_keeps_size() -> None:
-    """Pixelar no cambia el tamaño de la foto."""
-    image = make_image()
-    result = Pixelate(pixel_size=8).apply(image)
-    assert result.shape == image.shape
+Extras: letras pixeladas, música chiptune original generada por el navegador (botón 🔊) y un cursor de fantasmita pixelado.
 
+## Cómo funciona
 
-def test_pixelate_makes_squares_of_one_color() -> None:
-    """Cada cuadradito de 10x10 queda de un solo color."""
-    image = np.random.default_rng(0).integers(0, 256, (40, 40, 3), dtype=np.uint8)
-    result = Pixelate(pixel_size=10).apply(image)
-    square = result[:10, :10].reshape(-1, 3)
-    assert (square == square[0]).all()
+Cada foto pasa por tres filtros, en este orden:
 
+| Filtro | Qué hace | Cómo |
+| --- | --- | --- |
+| `Vivid` | Pone los colores más vivos y con más contraste | `ImageEnhance.Color` y `ImageEnhance.Contrast` de Pillow |
+| `Pixelate` | Convierte la foto en cuadraditos | Achica la foto promediando (`Image.BOX`) y la vuelve a agrandar sin suavizar (`Image.NEAREST`) |
+| `PaletteReducer` | Deja solo los colores de la paleta | Cambia cada píxel por el color de la paleta más cercano (distancia entre colores RGB y `argmin`) |
 
-def test_pixelate_rejects_invalid_size() -> None:
-    """Un tamaño de pixel menor a 1 da error."""
-    with pytest.raises(ValueError):
-        Pixelate(pixel_size=0)
+## Diseño
 
+- **Clase abstracta `Filter`** con un método `apply(image) -> image`. Todos los filtros heredan de ella.
+- **Polimorfismo:** la API aplica los filtros en un `for` sin preguntar cuál es cada uno, así que agregar un filtro nuevo es crear la clase y sumarla a la lista, sin `if/elif`.
+- **Paletas en un diccionario** (`PALETTES`): para agregar una paleta alcanza con una entrada nueva.
+- **Sin números mágicos:** los ajustes (tamaño del pixel, saturación, contraste) son parámetros con valor por defecto.
+- **Validación:** un tamaño de pixel menor a 1 o una paleta que no existe lanzan `ValueError`, y la API responde con un mensaje de error claro.
 
-@pytest.mark.parametrize("palette", list(PALETTES))
-def test_palette_reducer_uses_only_palette_colors(palette: str) -> None:
-    """Después de reducir, solo quedan colores de la paleta elegida."""
-    result = PaletteReducer(palette).apply(make_image())
-    used = {tuple(color) for color in result.reshape(-1, 3).tolist()}
-    assert used <= set(PALETTES[palette])
+```mermaid
+classDiagram
+    class Filter {
+        <<abstract>>
+        +apply(image) ndarray
+    }
+    class Vivid {
+        +saturation: float
+        +contrast: float
+    }
+    class Pixelate {
+        +pixel_size: int
+    }
+    class PaletteReducer {
+        +colors: ndarray
+    }
+    Filter <|-- Vivid
+    Filter <|-- Pixelate
+    Filter <|-- PaletteReducer
+    class handler {
+        +do_POST()
+    }
+    handler --> Filter : aplica
+```
 
+### Decisiones
 
-def test_palette_reducer_rejects_unknown_palette() -> None:
-    """Una paleta que no existe da error."""
-    with pytest.raises(ValueError):
-        PaletteReducer("sepia")
+- **¿Por qué `Vivid` antes de pixelar?** Las fotos de celular tienen colores apagados. Probando con una foto de un vaso azul, el azul terminaba convertido en gris porque era el color más cercano de la paleta. Al realzar los colores antes, la paleta los reconoce bien.
+- **¿Por qué la paleta "consola"?** La paleta "retro" no tiene tonos de piel, y las caras quedaban manchadas. "Consola" tiene rosados, durazno y marrones, y las caras se ven mucho mejor.
+- **¿Por qué Pillow + NumPy y no OpenCV?** OpenCV es muy pesado para publicarlo en Vercel, y para este proyecto no hace falta.
+- **La foto se achica en el navegador** antes de enviarla (lado mayor de 1200 px), porque Vercel no acepta archivos muy pesados y las fotos de celular pesan mucho.
 
+## Estructura
 
-def test_vivid_makes_colors_stronger() -> None:
-    """Vivid aumenta la diferencia entre el canal más alto y el más bajo."""
-    image = np.full((10, 10, 3), (120, 100, 90), np.uint8)
-    result = Vivid().apply(image)
-    before = int(image[0, 0].max()) - int(image[0, 0].min())
-    after = int(result[0, 0].max()) - int(result[0, 0].min())
-    assert after > before
+```
+pixelart/filters.py     # los filtros y las paletas (el "core")
+api/pixelate.py         # API: recibe la foto por POST y devuelve el PNG
+index.html              # la página web
+cursor.svg              # el cursor de fantasmita
+tests/test_filters.py   # tests de los filtros
+requirements.txt        # librerías que instala Vercel
+```
 
+La API recibe la foto en el cuerpo del pedido y las opciones en el link:
+`POST /api/pixelate?pixel_size=12&palette=consola`
 
-def test_filters_do_not_modify_original() -> None:
-    """Ningún filtro cambia la imagen que recibe."""
-    image = make_image()
-    copy = image.copy()
-    for pixel_filter in [Vivid(), Pixelate(5), PaletteReducer("gameboy")]:
-        pixel_filter.apply(image)
-    assert np.array_equal(image, copy)
+## Tests
+
+```bash
+pip install numpy pillow pytest
+python -m pytest -v
+```
+
+Prueban que pixelar mantenga el tamaño y arme cuadraditos de un solo color, que solo queden colores de la paleta, que `Vivid` realce los colores, que los valores inválidos den error y que ningún filtro modifique la foto original.
+
+## Publicación
+
+La página está publicada en **Vercel**, conectada a este repositorio: cada commit se publica solo en unos segundos.
+
+## Limitaciones
+
+- Con cuadraditos muy grandes se pierden los detalles chicos, como los ojos.
+- Las paletas tienen pocos colores, así que algunos tonos terminan cambiados por el más parecido.
